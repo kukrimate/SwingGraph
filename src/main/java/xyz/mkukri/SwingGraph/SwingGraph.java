@@ -6,7 +6,9 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Panel for displaying graphs of built from Swing components
@@ -21,11 +23,22 @@ public class SwingGraph extends JPanel {
     private static final int MIN_WIDTH = 10;
     private static final int MIN_HEIGHT = 10;
 
-    private boolean opResize = false;
-    private Component opTarget = null;
-
+    /**
+     * Edges in the current graph
+     */
+    private Set<Edge> edges = new HashSet<>();
+    /**
+     * List of resizable vertices
+     */
+    private Set<Component> resizableVertices = new HashSet<>();
+    /**
+     * Vertex targeted by the user
+     */
+    private Component targetVertex = null;
+    /**
+     * Pre-calculated polygon for an edge's arrow head
+     */
     private final Polygon arrowHead;
-    private List<Edge> edges = new ArrayList<>();
 
     /**
      * Create a new GraphPanel
@@ -41,10 +54,21 @@ public class SwingGraph extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                opTarget = findVertex(e.getPoint());
-                opResize = opTarget != null;
-                updateCursor();
-                repaint();
+                Component clickedVertex = findVertex(e.getPoint());
+                if (clickedVertex != null) {
+                    if (!resizableVertices.contains(clickedVertex)) {
+                        resizableVertices.add(clickedVertex);
+                        updateCursor();
+                        revalidate();
+                        repaint();
+                    }
+                } else {
+                    if (resizableVertices.size() > 0) {
+                        resizableVertices.clear();
+                        revalidate();
+                        repaint();
+                    }
+                }
             }
         });
 
@@ -53,24 +77,23 @@ public class SwingGraph extends JPanel {
 
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (opTarget == null)
+                if (targetVertex == null)
                     return;
-
-                if (opResize) {
-                    int newWidth = e.getX() - opTarget.getX();
+                if (resizableVertices.contains(targetVertex)) {
+                    int newWidth = e.getX() - targetVertex.getX();
                     if (newWidth < MIN_WIDTH) {
                         newWidth = MIN_WIDTH;
                     }
-                    int newHeight = e.getY() - opTarget.getY();
+                    int newHeight = e.getY() - targetVertex.getY();
                     if (newHeight < MIN_HEIGHT) {
                         newHeight = MIN_HEIGHT;
                     }
-                    opTarget.setBounds(opTarget.getX(), opTarget.getY(), newWidth, newHeight);
+                    targetVertex.setBounds(targetVertex.getX(), targetVertex.getY(), newWidth, newHeight);
                 } else {
-                    Point offset = new Point((int) (opTarget.getX() - lastPos.getX()),
-                            (int) (opTarget.getY() - lastPos.getY()));
-                    opTarget.setBounds(e.getX() + offset.x, e.getY() + offset.y,
-                            opTarget.getWidth(), opTarget.getHeight());
+                    Point offset = new Point((int) (targetVertex.getX() - lastPos.getX()),
+                            (int) (targetVertex.getY() - lastPos.getY()));
+                    targetVertex.setBounds(e.getX() + offset.x, e.getY() + offset.y,
+                            targetVertex.getWidth(), targetVertex.getHeight());
                 }
                 revalidate();
                 repaint();
@@ -79,28 +102,29 @@ public class SwingGraph extends JPanel {
 
             @Override
             public void mouseMoved(MouseEvent e) {
-                if (!opResize) {
-                    opTarget = findVertex(e.getPoint());
+                Component hoveredVertex = findVertex(e.getPoint());
+                if (hoveredVertex != targetVertex) {
+                    targetVertex = hoveredVertex;
+                    revalidate();
                     repaint();
                 }
-                updateCursor();
+                updateCursor(); // NOTE: we need to always update the cursor,
+                                // because we might be coming from the inside of a vertex
                 lastPos = e.getPoint();
             }
         });
     }
 
     /**
-     * Update cursor style based on current operation
+     * Update the cursor type
      */
     private void updateCursor() {
-        if (!opResize) {
-            if (opTarget != null) {
-                setCursor(new Cursor(Cursor.MOVE_CURSOR));
-            } else {
-                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-            }
-        } else {
+        if (resizableVertices.contains(targetVertex)) {
             setCursor(new Cursor(Cursor.SE_RESIZE_CURSOR));
+        } else if (targetVertex != null) {
+            setCursor(new Cursor(Cursor.MOVE_CURSOR));
+        } else {
+            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         }
     }
 
@@ -208,12 +232,10 @@ public class SwingGraph extends JPanel {
         for (Component vertex : getComponents()) {
             g2D.setColor(BORDER_COLOR_NORMAL);
 
-            if (vertex == opTarget) {
-                if (opResize)
-                    g2D.setColor(BORDER_COLOR_RESIZE);
-                else
-                    g2D.setColor(BORDER_COLOR_MOVE);
-            }
+            if (resizableVertices.contains(vertex))
+                g2D.setColor(BORDER_COLOR_RESIZE);
+            else if (targetVertex == vertex)
+                g2D.setColor(BORDER_COLOR_MOVE);
 
             Rectangle borderRect = getBorderRect(vertex, 0);
             g2D.fillRect(borderRect.x, borderRect.y, borderRect.width, borderRect.height);
