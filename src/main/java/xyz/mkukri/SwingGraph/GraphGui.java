@@ -1,7 +1,12 @@
 package xyz.mkukri.SwingGraph;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.Dimension;
 
 public class GraphGui extends JFrame {
     private static final Dimension DEFAULT_SIZE = new Dimension(800, 600);
@@ -40,9 +45,13 @@ public class GraphGui extends JFrame {
         SwingGraph swingGraph = new SwingGraph();
 
         JPanel b1 = createVertexPanel("Test 1");
+        b1.setLocation(0, 0);
         JPanel b2 = createVertexPanel("Test 2");
+        b2.setLocation(100, 0);
         JPanel b3 = createVertexPanel("Test 3");
+        b3.setLocation(0, 100);
         JPanel b4 = createVertexPanel("Test 4");
+        b4.setLocation(100, 100);
 
         swingGraph.addVertex(b1);
         swingGraph.addVertex(b2);

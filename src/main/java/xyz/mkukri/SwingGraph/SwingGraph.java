@@ -1,10 +1,23 @@
 package xyz.mkukri.SwingGraph;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import xyz.mkukri.SwingGraph.geometry.Line;
+import xyz.mkukri.SwingGraph.geometry.Point;
+import xyz.mkukri.SwingGraph.geometry.Rectangle;
+
+import javax.swing.JPanel;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -24,21 +37,21 @@ public class SwingGraph extends JPanel {
     private static final int MIN_HEIGHT = 10;
 
     /**
-     * Edges in the current graph
+     * Pre-calculated polygon for an edge's arrow head
      */
-    private Set<Edge> edges = new HashSet<>();
+    private final Polygon arrowHead;
     /**
      * List of resizable vertices
      */
-    private Set<Component> resizableVertices = new HashSet<>();
+    private List<Component> resizableVertices = new ArrayList<>();
     /**
      * Vertex targeted by the user
      */
     private Component targetVertex = null;
     /**
-     * Pre-calculated polygon for an edge's arrow head
+     * Edges in the current graph
      */
-    private final Polygon arrowHead;
+    private Set<Edge> edges = new HashSet<>();
 
     /**
      * Create a new GraphPanel
@@ -54,7 +67,7 @@ public class SwingGraph extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                Component clickedVertex = findVertex(e.getPoint());
+                Component clickedVertex = findVertex(new Point(e.getPoint()));
                 if (clickedVertex != null) {
                     if (!resizableVertices.contains(clickedVertex)) {
                         resizableVertices.add(clickedVertex);
@@ -90,19 +103,18 @@ public class SwingGraph extends JPanel {
                     }
                     targetVertex.setBounds(targetVertex.getX(), targetVertex.getY(), newWidth, newHeight);
                 } else {
-                    Point offset = new Point((int) (targetVertex.getX() - lastPos.getX()),
-                            (int) (targetVertex.getY() - lastPos.getY()));
+                    Point offset = new Point(targetVertex.getX() - lastPos.x, targetVertex.getY() - lastPos.y);
                     targetVertex.setBounds(e.getX() + offset.x, e.getY() + offset.y,
                             targetVertex.getWidth(), targetVertex.getHeight());
                 }
                 revalidate();
                 repaint();
-                lastPos = e.getPoint();
+                lastPos = new Point(e.getPoint());
             }
 
             @Override
             public void mouseMoved(MouseEvent e) {
-                Component hoveredVertex = findVertex(e.getPoint());
+                Component hoveredVertex = findVertex(new Point(e.getPoint()));
                 if (hoveredVertex != targetVertex) {
                     targetVertex = hoveredVertex;
                     revalidate();
@@ -110,7 +122,7 @@ public class SwingGraph extends JPanel {
                 }
                 updateCursor(); // NOTE: we need to always update the cursor,
                                 // because we might be coming from the inside of a vertex
-                lastPos = e.getPoint();
+                lastPos = new Point(e.getPoint());
             }
         });
     }
@@ -131,15 +143,14 @@ public class SwingGraph extends JPanel {
     /**
      * Calculate the corresponding border rectangle for a vertex
      * @param vertex vertex
-     * @param width_offset extra "border" width (e.g. for accounting for the arrow head)
      * @return rectangle
      */
-    private Rectangle getBorderRect(Component vertex, int width_offset) {
-        Rectangle border = vertex.getBounds();
-        border.x -= BORDER_WIDTH + width_offset;
-        border.y -= BORDER_WIDTH + width_offset;
-        border.width += 2 * (BORDER_WIDTH + width_offset);
-        border.height += 2 * (BORDER_WIDTH + width_offset);
+    private Rectangle getBorderRect(Component vertex) {
+        Rectangle border = new Rectangle(vertex.getBounds());
+        border.x -= BORDER_WIDTH;
+        border.y -= BORDER_WIDTH;
+        border.width += 2 * BORDER_WIDTH;
+        border.height += 2 * BORDER_WIDTH;
         return border;
     }
 
@@ -150,25 +161,11 @@ public class SwingGraph extends JPanel {
      */
     private Component findVertex(Point p) {
         for (Component vertex : getComponents()) {
-            Rectangle border = getBorderRect(vertex,0);
-            if (border.contains(p))
+            Rectangle border = getBorderRect(vertex);
+            if (border.containsPoint(p))
                 return vertex;
         }
         return null;
-    }
-
-    /**
-     * Find lines for each side of a rectangle
-     * @param r rectangle
-     * @return list of lines
-     */
-    private List<Line2D> rectSides(Rectangle r) {
-        List<Line2D> lines = new ArrayList<>();
-        lines.add(new Line2D.Float(r.x, r.y, r.x + r.width, r.y));
-        lines.add(new Line2D.Float(r.x, r.y, r.x, r.y + r.height));
-        lines.add(new Line2D.Float(r.x + r.width, r.y, r.x + r.width, r.y + r.height));
-        lines.add(new Line2D.Float(r.x, r.y + r.height, r.x + r.width, r.y + r.height));
-        return lines;
     }
 
     /**
@@ -177,21 +174,19 @@ public class SwingGraph extends JPanel {
      * @param r2 second rectangle
      * @return connecting line
      */
-    private Line2D connectRects(Rectangle r1, Rectangle r2) {
-        List<Line2D> sides1 = rectSides(r1);
-        List<Line2D> sides2 = rectSides(r2);
+    private Line connectRects(Rectangle r1, Rectangle r2) {
+        List<Line> sides1 = r1.getSides();
+        List<Line> sides2 = r2.getSides();
 
-        double shortestDistance = -1;
-        Line2D shortestLine = null;
+        Line shortestLine = null;
 
-        for (Line2D s1 : sides1) {
-            Point m1 = new Point((int) (s1.getX1() + s1.getX2()) / 2, (int) (s1.getY1() + s1.getY2()) / 2);
-            for (Line2D s2 : sides2) {
-                Point m2 = new Point((int) (s2.getX1() + s2.getX2()) / 2, (int) (s2.getY1() + s2.getY2()) / 2);
-                double curDistance = Math.sqrt(Math.pow(m1.x - m2.x, 2) + Math.pow(m1.y - m2.y, 2));
-                if (shortestDistance == -1 || curDistance < shortestDistance) {
-                    shortestDistance = curDistance;
-                    shortestLine = new Line2D.Float(m1.x, m1.y, m2.x, m2.y);
+        for (Line s1 : sides1) {
+            Point m1 = s1.getMidpoint();
+            for (Line s2 : sides2) {
+                Point m2 = s2.getMidpoint();
+                Line curLine = new Line(m1, m2);
+                if (shortestLine == null || curLine.getLength() < shortestLine.getLength()) {
+                    shortestLine = curLine;
                 }
             }
         }
@@ -216,13 +211,14 @@ public class SwingGraph extends JPanel {
 
         for (Edge e : edges) {
             // Draw line for the arrow
-            Line2D l = connectRects(getBorderRect(e.getV1(), 0), getBorderRect(e.getV2(), 5));
-            g2D.drawLine((int) l.getX1(), (int)  l.getY1(), (int) l.getX2(), (int) l.getY2());
+            Line l = connectRects(getBorderRect(e.getV1()), getBorderRect(e.getV2()));
+            g2D.drawLine(l.x1, l.y1, l.x2, l.y2);
             // Draw the arrow head
             AffineTransform oldTransform = g2D.getTransform();
             AffineTransform transform = new AffineTransform();
-            transform.translate(l.getX2(), l.getY2());
-            transform.rotate(Math.atan2(l.getY2() - l.getY1(), l.getX2() - l.getX1()) - Math.PI / 2);
+            Point arrowPoint = l.pointFrom2(5);
+            transform.translate(arrowPoint.x, arrowPoint.y);
+            transform.rotate(Math.atan2(l.y2 - l.y1, l.x2 - l.x1) - Math.PI / 2);
             g2D.setTransform(transform);
             g2D.fill(arrowHead);
             g2D.setTransform(oldTransform);
@@ -237,7 +233,7 @@ public class SwingGraph extends JPanel {
             else if (targetVertex == vertex)
                 g2D.setColor(BORDER_COLOR_MOVE);
 
-            Rectangle borderRect = getBorderRect(vertex, 0);
+            Rectangle borderRect = getBorderRect(vertex);
             g2D.fillRect(borderRect.x, borderRect.y, borderRect.width, borderRect.height);
         }
 
