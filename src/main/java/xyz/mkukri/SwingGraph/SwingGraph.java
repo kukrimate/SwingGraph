@@ -9,6 +9,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
@@ -27,19 +28,42 @@ import java.util.Set;
  * Panel for displaying graphs of built from Swing components
  */
 public class SwingGraph extends JPanel {
-    private static final Color EDGE_COLOR = Color.black;
-    private static final int EDGE_WIDTH = 1;
-    private static final Color BORDER_COLOR_NORMAL = Color.lightGray;
-    private static final Color BORDER_COLOR_MOVE = Color.darkGray;
-    private static final Color BORDER_COLOR_RESIZE = Color.green;
-    private static final int BORDER_WIDTH = 2;
-    private static final int MIN_WIDTH = 10;
-    private static final int MIN_HEIGHT = 10;
-
+    /**
+     * Color of a vertex's border
+     */
+    private Color vertexBorderColor = Color.lightGray;
+    /**
+     * Color of a vertex's border when moving
+     */
+    private Color vertexBorderColorMove = Color.darkGray;
+    /**
+     * Color of a vertex's border when resizing
+     */
+    private Color vertexBorderColorResize = Color.green;
+    /**
+     * Width of a vertex's border in pixels
+     */
+    private int vertexBorderWidth = 2;
+    /**
+     * Minimum size of a vertex
+     */
+    private Dimension vertexMinSize = new Dimension(10, 10);
+    /**
+     * Color of an edge
+     */
+    private Color edgeColor = Color.black;
+    /**
+     * Width of an edge in pixels
+     */
+    private int edgeWidth = 1;
+    /**
+     * Size of the arrow head
+     */
+    private int arrowHeadSize = 5;
     /**
      * Pre-calculated polygon for an edge's arrow head
      */
-    private final Polygon arrowHead;
+    private Polygon arrowHead;
     /**
      * List of resizable vertices
      */
@@ -58,12 +82,7 @@ public class SwingGraph extends JPanel {
      */
     public SwingGraph() {
         setLayout(null);
-
-        arrowHead = new Polygon();
-        arrowHead.addPoint(0, 5);
-        arrowHead.addPoint(-5, -5);
-        arrowHead.addPoint(5, -5);
-
+        recreateArrowHead();
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -84,7 +103,6 @@ public class SwingGraph extends JPanel {
                 }
             }
         });
-
         addMouseMotionListener(new MouseMotionAdapter() {
             private Point lastPos = new Point(0, 0);
 
@@ -94,12 +112,12 @@ public class SwingGraph extends JPanel {
                     return;
                 if (resizableVertices.contains(targetVertex)) {
                     int newWidth = e.getX() - targetVertex.getX();
-                    if (newWidth < MIN_WIDTH) {
-                        newWidth = MIN_WIDTH;
+                    if (newWidth < vertexMinSize.width) {
+                        newWidth = vertexMinSize.width;
                     }
                     int newHeight = e.getY() - targetVertex.getY();
-                    if (newHeight < MIN_HEIGHT) {
-                        newHeight = MIN_HEIGHT;
+                    if (newHeight < vertexMinSize.height) {
+                        newHeight = vertexMinSize.height;
                     }
                     targetVertex.setBounds(targetVertex.getX(), targetVertex.getY(), newWidth, newHeight);
                 } else {
@@ -147,10 +165,10 @@ public class SwingGraph extends JPanel {
      */
     private Rectangle getBorderRect(Component vertex) {
         Rectangle border = new Rectangle(vertex.getBounds());
-        border.x -= BORDER_WIDTH;
-        border.y -= BORDER_WIDTH;
-        border.width += 2 * BORDER_WIDTH;
-        border.height += 2 * BORDER_WIDTH;
+        border.x -= vertexBorderWidth;
+        border.y -= vertexBorderWidth;
+        border.width += 2 * vertexBorderWidth;
+        border.height += 2 * vertexBorderWidth;
         return border;
     }
 
@@ -206,8 +224,8 @@ public class SwingGraph extends JPanel {
         g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // Draw edges
-        g2D.setStroke(new BasicStroke(EDGE_WIDTH));
-        g2D.setColor(EDGE_COLOR);
+        g2D.setStroke(new BasicStroke(edgeWidth));
+        g2D.setColor(edgeColor);
 
         for (Edge e : edges) {
             // Draw line for the arrow
@@ -226,12 +244,12 @@ public class SwingGraph extends JPanel {
 
         // Draw vertex borders
         for (Component vertex : getComponents()) {
-            g2D.setColor(BORDER_COLOR_NORMAL);
+            g2D.setColor(vertexBorderColor);
 
             if (resizableVertices.contains(vertex))
-                g2D.setColor(BORDER_COLOR_RESIZE);
+                g2D.setColor(vertexBorderColorResize);
             else if (targetVertex == vertex)
-                g2D.setColor(BORDER_COLOR_MOVE);
+                g2D.setColor(vertexBorderColorMove);
 
             Rectangle borderRect = getBorderRect(vertex);
             g2D.fillRect(borderRect.x, borderRect.y, borderRect.width, borderRect.height);
@@ -239,6 +257,85 @@ public class SwingGraph extends JPanel {
 
         g2D.setStroke(oldStroke);
         g2D.setColor(oldColor);
+    }
+
+    public Color getVertexBorderColor() {
+        return vertexBorderColor;
+    }
+
+    public void setVertexBorderColor(Color vertexBorderColor) {
+        this.vertexBorderColor = vertexBorderColor;
+    }
+
+    public Color getVertexBorderColorMove() {
+        return vertexBorderColorMove;
+    }
+
+    public void setVertexBorderColorMove(Color vertexBorderColorMove) {
+        this.vertexBorderColorMove = vertexBorderColorMove;
+    }
+
+    public Color getVertexBorderColorResize() {
+        return vertexBorderColorResize;
+    }
+
+    public void setVertexBorderColorResize(Color vertexBorderColorResize) {
+        this.vertexBorderColorResize = vertexBorderColorResize;
+    }
+
+    public int getVertexBorderWidth() {
+        return vertexBorderWidth;
+    }
+
+    public void setVertexBorderWidth(int vertexBorderWidth) {
+        this.vertexBorderWidth = vertexBorderWidth;
+    }
+
+    public Dimension getVertexMinSize() {
+        return vertexMinSize;
+    }
+
+    public void setVertexMinSize(Dimension vertexMinSize) {
+        this.vertexMinSize = vertexMinSize;
+    }
+
+    public Color getEdgeColor() {
+        return edgeColor;
+    }
+
+    public void setEdgeColor(Color edgeColor) {
+        this.edgeColor = edgeColor;
+    }
+
+    public int getEdgeWidth() {
+        return edgeWidth;
+    }
+
+    public void setEdgeWidth(int edgeWidth) {
+        this.edgeWidth = edgeWidth;
+    }
+
+    public int getArrowHeadSize() {
+        return arrowHeadSize;
+    }
+
+    /**
+     * Re-creates the pre-rendered arrow head polygon
+     */
+    private void recreateArrowHead() {
+        arrowHead = new Polygon();
+        arrowHead.addPoint(0, 5);
+        arrowHead.addPoint(-5, -5);
+        arrowHead.addPoint(5, -5);
+    }
+
+    /**
+     * Change the arrow head's size
+     * @param arrowHeadSize arrow head size
+     */
+    public void setArrowHeadSize(int arrowHeadSize) {
+        this.arrowHeadSize = arrowHeadSize;
+        recreateArrowHead();
     }
 
     /**

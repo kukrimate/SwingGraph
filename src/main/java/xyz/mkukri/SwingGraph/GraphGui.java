@@ -9,7 +9,7 @@ import javax.swing.JTextField;
 import java.awt.Dimension;
 
 public class GraphGui extends JFrame {
-    private static final Dimension DEFAULT_SIZE = new Dimension(800, 600);
+    private static Dimension DEFAULT_SIZE = new Dimension(800, 600);
 
     public GraphGui() {
         this.setPreferredSize(DEFAULT_SIZE);
