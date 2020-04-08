@@ -43,6 +43,7 @@ public class GraphGui extends JFrame {
 
     public static void main(String[] args) {
         SwingGraph swingGraph = new SwingGraph();
+        swingGraph.setArrowHeadSize(25);
 
         JPanel b1 = createVertexPanel("Test 1");
         b1.setLocation(0, 0);

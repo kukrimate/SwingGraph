@@ -51,7 +51,7 @@ public class Rectangle {
      */
     public List<Line> getSides() {
         List<Line> sides = new ArrayList<>();
-        sides.add(new Line(x, y,x + width, y));
+        sides.add(new Line(x, y, x + width, y));
         sides.add(new Line(x, y, x, y + height));
         sides.add(new Line(x + width, y, x + width, y + height));
         sides.add(new Line(x, y + height, x + width, y + height));

@@ -234,7 +234,7 @@ public class SwingGraph extends JPanel {
             // Draw the arrow head
             AffineTransform oldTransform = g2D.getTransform();
             AffineTransform transform = new AffineTransform();
-            Point arrowPoint = l.pointFrom2(5);
+            Point arrowPoint = l.pointFrom2(arrowHeadSize);
             transform.translate(arrowPoint.x, arrowPoint.y);
             transform.rotate(Math.atan2(l.y2 - l.y1, l.x2 - l.x1) - Math.PI / 2);
             g2D.setTransform(transform);
@@ -324,9 +324,9 @@ public class SwingGraph extends JPanel {
      */
     private void recreateArrowHead() {
         arrowHead = new Polygon();
-        arrowHead.addPoint(0, 5);
-        arrowHead.addPoint(-5, -5);
-        arrowHead.addPoint(5, -5);
+        arrowHead.addPoint(0, arrowHeadSize);
+        arrowHead.addPoint(-arrowHeadSize, -arrowHeadSize);
+        arrowHead.addPoint(arrowHeadSize, -arrowHeadSize);
     }
 
     /**
