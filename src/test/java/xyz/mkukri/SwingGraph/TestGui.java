@@ -8,10 +8,10 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.awt.Dimension;
 
-public class GraphGui extends JFrame {
+public class TestGui extends JFrame {
     private static Dimension DEFAULT_SIZE = new Dimension(800, 600);
 
-    public GraphGui() {
+    public TestGui() {
         this.setPreferredSize(DEFAULT_SIZE);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.pack();
@@ -63,7 +63,7 @@ public class GraphGui extends JFrame {
         swingGraph.addEdge(b2, b4);
         swingGraph.addEdge(b3, b4);
 
-        GraphGui graphGui = new GraphGui();
+        TestGui graphGui = new TestGui();
         graphGui.setContentPane(swingGraph);
         graphGui.pack();
         graphGui.setVisible(true);
