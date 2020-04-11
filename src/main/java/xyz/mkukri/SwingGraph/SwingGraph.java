@@ -1,5 +1,7 @@
 package xyz.mkukri.SwingGraph;
 
+import xyz.mkukri.SwingGraph.edge.EdgeRenderer;
+import xyz.mkukri.SwingGraph.edge.EdgeRendererMid;
 import xyz.mkukri.SwingGraph.geometry.Line;
 import xyz.mkukri.SwingGraph.geometry.Point;
 import xyz.mkukri.SwingGraph.geometry.Rectangle;
@@ -48,22 +50,12 @@ public class SwingGraph extends JPanel {
      * Minimum size of a vertex
      */
     private Dimension vertexMinSize = new Dimension(10, 10);
+
     /**
-     * Color of an edge
+     * Edge renderer
      */
-    private Color edgeColor = Color.black;
-    /**
-     * Width of an edge in pixels
-     */
-    private int edgeWidth = 1;
-    /**
-     * Size of the arrow head
-     */
-    private int arrowHeadSize = 5;
-    /**
-     * Pre-calculated polygon for an edge's arrow head
-     */
-    private Polygon arrowHead;
+    private EdgeRenderer edgeRenderer;
+
     /**
      * List of resizable vertices
      */
@@ -77,12 +69,13 @@ public class SwingGraph extends JPanel {
      */
     private Set<Edge> edges = new HashSet<>();
 
-    /**
-     * Create a new GraphPanel
-     */
     public SwingGraph() {
+        this(new EdgeRendererMid());
+    }
+
+    public SwingGraph(EdgeRenderer edgeRenderer) {
+        this.edgeRenderer = edgeRenderer;
         setLayout(null);
-        recreateArrowHead();
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -186,32 +179,6 @@ public class SwingGraph extends JPanel {
         return null;
     }
 
-    /**
-     * Calculate a line connecting two rectangles
-     * @param r1 first rectangle
-     * @param r2 second rectangle
-     * @return connecting line
-     */
-    private Line connectRects(Rectangle r1, Rectangle r2) {
-        List<Line> sides1 = r1.getSides();
-        List<Line> sides2 = r2.getSides();
-
-        Line shortestLine = null;
-
-        for (Line s1 : sides1) {
-            Point m1 = s1.getMidpoint();
-            for (Line s2 : sides2) {
-                Point m2 = s2.getMidpoint();
-                Line curLine = new Line(m1, m2);
-                if (shortestLine == null || curLine.getLength() < shortestLine.getLength()) {
-                    shortestLine = curLine;
-                }
-            }
-        }
-
-        return shortestLine;
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -220,26 +187,8 @@ public class SwingGraph extends JPanel {
         Stroke oldStroke = g2D.getStroke();
         Color oldColor = g2D.getColor();
 
-        // Enable AA, otherwise the edges look rough
-        g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Draw edges
-        g2D.setStroke(new BasicStroke(edgeWidth));
-        g2D.setColor(edgeColor);
-
         for (Edge e : edges) {
-            // Draw line for the arrow
-            Line l = connectRects(getBorderRect(e.getV1()), getBorderRect(e.getV2()));
-            g2D.drawLine(l.x1, l.y1, l.x2, l.y2);
-            // Draw the arrow head
-            AffineTransform oldTransform = g2D.getTransform();
-            AffineTransform transform = new AffineTransform();
-            Point arrowPoint = l.pointFrom2(arrowHeadSize);
-            transform.translate(arrowPoint.x, arrowPoint.y);
-            transform.rotate(Math.atan2(l.y2 - l.y1, l.x2 - l.x1) - Math.PI / 2);
-            g2D.setTransform(transform);
-            g2D.fill(arrowHead);
-            g2D.setTransform(oldTransform);
+            edgeRenderer.renderEdge(g2D, getBorderRect(e.v1), getBorderRect(e.v2));
         }
 
         // Draw vertex borders
@@ -297,45 +246,6 @@ public class SwingGraph extends JPanel {
 
     public void setVertexMinSize(Dimension vertexMinSize) {
         this.vertexMinSize = vertexMinSize;
-    }
-
-    public Color getEdgeColor() {
-        return edgeColor;
-    }
-
-    public void setEdgeColor(Color edgeColor) {
-        this.edgeColor = edgeColor;
-    }
-
-    public int getEdgeWidth() {
-        return edgeWidth;
-    }
-
-    public void setEdgeWidth(int edgeWidth) {
-        this.edgeWidth = edgeWidth;
-    }
-
-    public int getArrowHeadSize() {
-        return arrowHeadSize;
-    }
-
-    /**
-     * Re-creates the pre-rendered arrow head polygon
-     */
-    private void recreateArrowHead() {
-        arrowHead = new Polygon();
-        arrowHead.addPoint(0, arrowHeadSize);
-        arrowHead.addPoint(-arrowHeadSize, -arrowHeadSize);
-        arrowHead.addPoint(arrowHeadSize, -arrowHeadSize);
-    }
-
-    /**
-     * Change the arrow head's size
-     * @param arrowHeadSize arrow head size
-     */
-    public void setArrowHeadSize(int arrowHeadSize) {
-        this.arrowHeadSize = arrowHeadSize;
-        recreateArrowHead();
     }
 
     /**

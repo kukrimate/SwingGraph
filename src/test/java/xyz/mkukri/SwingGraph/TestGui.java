@@ -1,12 +1,14 @@
 package xyz.mkukri.SwingGraph;
 
+import xyz.mkukri.SwingGraph.edge.EdgeRendererMid;
+
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import java.awt.Dimension;
+import java.awt.*;
 
 public class TestGui extends JFrame {
     private static Dimension DEFAULT_SIZE = new Dimension(800, 600);
@@ -42,8 +44,7 @@ public class TestGui extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingGraph swingGraph = new SwingGraph();
-        swingGraph.setArrowHeadSize(25);
+        SwingGraph swingGraph = new SwingGraph( );
 
         JPanel b1 = createVertexPanel("Test 1");
         b1.setLocation(0, 0);
