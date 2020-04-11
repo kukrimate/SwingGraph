@@ -1,7 +1,5 @@
 package xyz.mkukri.SwingGraph;
 
-import xyz.mkukri.SwingGraph.edge.EdgeRendererMid;
-
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
