@@ -1,26 +1,22 @@
 package xyz.mkukri.SwingGraph;
 
 import xyz.mkukri.SwingGraph.edge.EdgeRenderer;
-import xyz.mkukri.SwingGraph.edge.EdgeRendererMid;
-import xyz.mkukri.SwingGraph.geometry.Line;
+import xyz.mkukri.SwingGraph.edge.EdgeRendererOrthogonal;
+import xyz.mkukri.SwingGraph.edge.EdgeRendererStraight;
 import xyz.mkukri.SwingGraph.geometry.Point;
 import xyz.mkukri.SwingGraph.geometry.Rectangle;
 
 import javax.swing.JPanel;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -67,10 +63,10 @@ public class SwingGraph extends JPanel {
     /**
      * Edges in the current graph
      */
-    private Set<Edge> edges = new HashSet<>();
+    private Set<Pair<Component>> edges = new HashSet<>();
 
     public SwingGraph() {
-        this(new EdgeRendererMid());
+        this(new EdgeRendererStraight());
     }
 
     public SwingGraph(EdgeRenderer edgeRenderer) {
@@ -187,8 +183,8 @@ public class SwingGraph extends JPanel {
         Stroke oldStroke = g2D.getStroke();
         Color oldColor = g2D.getColor();
 
-        for (Edge e : edges) {
-            edgeRenderer.renderEdge(g2D, getBorderRect(e.v1), getBorderRect(e.v2));
+        for (Pair<Component> e : edges) {
+            edgeRenderer.renderEdge(g2D, getBorderRect(e.obj1), getBorderRect(e.obj2));
         }
 
         // Draw vertex borders
@@ -269,27 +265,6 @@ public class SwingGraph extends JPanel {
      * @param v2 AWT or Swing component of the v2
      */
     public void addEdge(Component v1, Component v2) {
-        edges.add(new Edge(v1, v2));
-    }
-
-    /**
-     * Represents an edge in a graph
-     */
-    private static class Edge {
-        private Component v1;
-        private Component v2;
-
-        public Edge(Component v1, Component v2) {
-            this.v1 = v1;
-            this.v2 = v2;
-        }
-
-        public Component getV1() {
-            return v1;
-        }
-
-        public Component getV2() {
-            return v2;
-        }
+        edges.add(new Pair<>(v1, v2));
     }
 }

@@ -4,24 +4,29 @@ import xyz.mkukri.SwingGraph.geometry.Point;
 import xyz.mkukri.SwingGraph.geometry.Rectangle;
 import xyz.mkukri.SwingGraph.geometry.Line;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
-import java.util.List;
 
 /**
- * Draws straight edges between the midpoint of the closest side of two vertices
+ * Find the sides facing each other of two rectangles and
+ * draw straight edges between their midpoints
  */
-public class EdgeRendererMid implements EdgeRenderer {
+public class EdgeRendererStraight implements EdgeRenderer {
     private final Color edgeColor;
     private final int edgeWidth;
     private final int arrowHeadSize;
     private final Polygon arrowHead;
 
-    public EdgeRendererMid() {
+    public EdgeRendererStraight() {
         this(Color.black, 1, 5);
     }
 
-    public EdgeRendererMid(Color edgeColor, int edgeWidth, int arrowHeadSize) {
+    public EdgeRendererStraight(Color edgeColor, int edgeWidth, int arrowHeadSize) {
         this.edgeColor = edgeColor;
         this.edgeWidth = edgeWidth;
         this.arrowHeadSize = arrowHeadSize;
@@ -33,30 +38,10 @@ public class EdgeRendererMid implements EdgeRenderer {
         arrowHead.addPoint(arrowHeadSize, -arrowHeadSize);
     }
 
-    /**
-     * Calculate the midpoint line between the closest sides of two rectangles
-     * @param r1 rectangle 1
-     * @param r2 rectangle 2
-     * @return line
-     */
-    private Line midpointLine(Rectangle r1, Rectangle r2) {
-        java.util.List<Line> sides1 = r1.getSides();
-        List<Line> sides2 = r2.getSides();
-
-        Line shortestLine = null;
-
-        for (Line s1 : sides1) {
-            xyz.mkukri.SwingGraph.geometry.Point m1 = s1.getMidpoint();
-            for (Line s2 : sides2) {
-                xyz.mkukri.SwingGraph.geometry.Point m2 = s2.getMidpoint();
-                Line curLine = new Line(m1, m2);
-                if (shortestLine == null || curLine.getLength() < shortestLine.getLength()) {
-                    shortestLine = curLine;
-                }
-            }
-        }
-
-        return shortestLine;
+    private Line getEdge(Rectangle r1, Rectangle r2) {
+        Line h = EdgeRendererUtil.connectClosestMidpoints(r1.getHorizontalSides(), r2.getHorizontalSides());
+        Line v = EdgeRendererUtil.connectClosestMidpoints(r1.getVerticalSides(), r2.getVerticalSides());
+        return h.getLength() < v.getLength() ? h : v;
     }
 
     @Override
@@ -70,7 +55,7 @@ public class EdgeRendererMid implements EdgeRenderer {
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // Render line
-        Line line = midpointLine(v1, v2);
+        Line line = getEdge(v1, v2);
         graphics2D.drawLine(line.x1, line.y1, line.x2, line.y2);
 
         // Render arrow head

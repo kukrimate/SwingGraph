@@ -33,28 +33,24 @@ public class Rectangle {
     }
 
     /**
-     * Convert a rectangle to a list of vertices
-     * @return list of vertices
+     * Get the horizontal sides of the rectangle
+     * @return horizontal sides
      */
-    public List<Point> getVertices() {
-        List<Point> vertices = new ArrayList<>();
-        vertices.add(new Point(x, y));
-        vertices.add(new Point(x + width, y));
-        vertices.add(new Point(x, y + height));
-        vertices.add(new Point(x + width, y + height));
-        return vertices;
+    public List<Line> getHorizontalSides() {
+        List<Line> sides = new ArrayList<>();
+        sides.add(new Line(x, y, x + width, y));
+        sides.add(new Line(x, y + height, x + width, y + height));
+        return sides;
     }
 
     /**
-     * Convert a rectangle to a list of sides
-     * @return list of sides
+     * Get the vertical sides of this rectangle
+     * @return vertical sides
      */
-    public List<Line> getSides() {
+    public List<Line> getVerticalSides() {
         List<Line> sides = new ArrayList<>();
-        sides.add(new Line(x, y, x + width, y));
         sides.add(new Line(x, y, x, y + height));
         sides.add(new Line(x + width, y, x + width, y + height));
-        sides.add(new Line(x, y + height, x + width, y + height));
         return sides;
     }
 }

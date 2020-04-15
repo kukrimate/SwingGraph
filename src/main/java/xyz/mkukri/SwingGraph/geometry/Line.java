@@ -1,5 +1,7 @@
 package xyz.mkukri.SwingGraph.geometry;
 
+import xyz.mkukri.SwingGraph.Pair;
+
 public class Line {
     public int x1;
     public int y1;
